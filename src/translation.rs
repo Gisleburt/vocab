@@ -1,8 +1,13 @@
+use diesel::{Insertable, Queryable};
+
+use crate::schema::translations;
+
+#[derive(Insertable, Queryable)]
 pub struct Translation {
     pub local: String,
     pub foreign: String,
-    pub guesses_correct: u32,
-    pub guesses_total: u32,
+    pub guesses_correct: i32,
+    pub guesses_total: i32,
 }
 
 impl Translation {

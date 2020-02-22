@@ -1,4 +1,4 @@
-CREATE TABLE vocab
+CREATE TABLE translations
 (
     "local"           VARCHAR          NOT NULL,
     "foreign"         VARCHAR          NOT NULL,

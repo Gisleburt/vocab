@@ -1,5 +1,5 @@
 table! {
-    vocab (local, foreign) {
+    translations (local, foreign) {
         local -> Text,
         foreign -> Text,
         guesses_total -> Integer,
