@@ -1,5 +1,5 @@
 [package]
-name = "vocab-js"
+name = "vocab"
 version = "0.1.0"
 authors = ["Daniel Mason <daniel@danielmason.com>"]
 edition = "2018"
@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 diesel = { version="1.4.3", default-features=false, features=["sqlite"] }
+structopt = "0.3.9"

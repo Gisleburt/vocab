@@ -1,3 +1,7 @@
+use std::error::Error;
+use std::io;
+use std::path::Path;
+
 use diesel::{Connection, ConnectionError, RunQueryDsl, SqliteConnection};
 
 use crate::translation::Translation;
@@ -7,6 +11,8 @@ const INIT: &str = include_str!("migrations/2020-02-22_vocab_table.sql");
 #[derive(Debug)]
 pub enum VocabStoreError {
     ConnectionError(ConnectionError),
+    NotInitialised,
+    UnexpectedError(Box<dyn Error>),
 }
 
 impl From<ConnectionError> for VocabStoreError {
@@ -15,12 +21,24 @@ impl From<ConnectionError> for VocabStoreError {
     }
 }
 
+impl From<std::io::Error> for VocabStoreError {
+    fn from(e: io::Error) -> Self {
+        match e.kind() {
+            io::ErrorKind::NotFound => VocabStoreError::NotInitialised,
+            _ => VocabStoreError::UnexpectedError(Box::new(e))
+        }
+    }
+}
+
 type VSResult<T> = Result<T, VocabStoreError>;
 
 pub struct VocabStore(SqliteConnection);
 
 impl VocabStore {
-    pub fn new(file: &str) -> VSResult<VocabStore> {
+    pub fn from(file: &str) -> VSResult<VocabStore> {
+        if !Path::new(file).exists() {
+            return Err(VocabStoreError::NotInitialised)
+        }
         let connection = SqliteConnection::establish(file)?;
         Ok(VocabStore(connection))
     }
