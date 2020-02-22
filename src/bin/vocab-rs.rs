@@ -1,3 +1,6 @@
+use vocab_js::VocabStore;
+
 fn main() {
-    println!("Hello, world!");
+    let vocab_store = VocabStore::init("vocab.sqlite")
+        .expect("Could not init store");
 }
