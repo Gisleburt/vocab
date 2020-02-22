@@ -65,7 +65,7 @@ impl VocabStore {
             return Err(VocabStoreError::AlreadyInitialised);
         }
         let connection = SqliteConnection::establish(file)?;
-        diesel::sql_query(INIT).execute(&connection);
+        diesel::sql_query(INIT).execute(&connection)?;
         Ok(VocabStore(connection))
     }
 

@@ -1,3 +1,43 @@
+//! # Vocab
+//!
+//! A command line application for learning vocabulary in new languages
+//!
+//! ## Usage:
+//!
+//! ### Initialising:
+//!
+//! `init` will create a bew vocab.sqlite file in the current directory. We recommend you use
+//! directories to label which language you're learning.
+//!
+//! Example:
+//!
+//! ```shell
+//! mkdir japanese
+//! cd japanese
+//! vocab init
+//! ```
+//!
+//! This will help you separate and organise multiple languages.
+//!
+//! ### Adding new words
+//!
+//! `add <local> <foreign>` will let you add a new word as you learn it. `<local>` should be the
+//! word in your own language, `<foreign>` should be the word in the language you are learning.
+//!
+//! Example:
+//!
+//! ```shell
+//! vocab add japan 日本
+//! ```
+//!
+//! ### Try a single word
+//!
+//! ToDo!
+//!
+//! ### Endless Mode
+//!
+//! ToDo!
+
 use std::error::Error;
 
 use structopt::StructOpt;
@@ -13,12 +53,16 @@ struct VocabApp {
 
 #[derive(StructOpt)]
 enum Command {
+    /// Initialise the database
     Init,
+    /// Add a new word to the database
     Add {
         local: String,
         foreign: String,
     },
+    /// Get a single word from the database
     Single,
+    /// (default) Practice as many words as you like
     Multi,
 }
 
@@ -69,7 +113,7 @@ fn initialise_and_exit() {
             println!("Database initialised");
             std::process::exit(0)
         },
-        Err(e @ VocabStoreError::AlreadyInitialised) => {
+        Err(_e @ VocabStoreError::AlreadyInitialised) => {
             eprintln!("Already initialised");
             std::process::exit(0)
         },
