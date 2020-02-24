@@ -48,7 +48,7 @@ use vocab::{Translation, VocabStore, VocabStoreError};
 #[derive(StructOpt)]
 struct VocabApp {
     #[structopt(subcommand)]
-    subcommand: Option<Command>
+    subcommand: Option<Command>,
 }
 
 #[derive(StructOpt)]
@@ -56,10 +56,7 @@ enum Command {
     /// Initialise the database
     Init,
     /// Add a new word to the database
-    Add {
-        local: String,
-        foreign: String,
-    },
+    Add { local: String, foreign: String },
     /// Get a single word from the database
     Single,
     /// (default) Practice as many words as you like
@@ -79,7 +76,7 @@ fn app() -> Result<(), Box<dyn Error>> {
         Command::Init => initialise_and_exit(),
         Command::Add { local, foreign } => {
             let translation = Translation::new(&local, &foreign);
-            get_vocab_store().store(translation)?;
+            get_vocab_store().add(&translation)?;
         }
         Command::Single => {
             println!("Commands::Single");
@@ -97,11 +94,11 @@ fn get_vocab_store() -> VocabStore {
     match VocabStore::from(SQLITE_FILE) {
         Ok(vs) => {
             return vs;
-        },
+        }
         Err(VocabStoreError::NotInitialised) => {
             eprintln!("Not initialised, run: ");
             eprintln!("    vocab --init");
-        },
+        }
         Err(e) => eprintln!("Unknown error {:?}", e),
     }
     std::process::exit(1);
@@ -112,11 +109,11 @@ fn initialise_and_exit() {
         Ok(_) => {
             println!("Database initialised");
             std::process::exit(0)
-        },
+        }
         Err(_e @ VocabStoreError::AlreadyInitialised) => {
             eprintln!("Already initialised");
             std::process::exit(0)
-        },
+        }
         Err(e) => eprintln!("Could not init store {}", e),
     }
     std::process::exit(1);

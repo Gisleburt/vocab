@@ -2,7 +2,7 @@ use diesel::{Insertable, Queryable};
 
 use crate::schema::translations;
 
-#[derive(Default, Insertable, Queryable)]
+#[derive(Debug, Default, Insertable, Queryable, PartialEq)]
 pub struct Translation {
     pub local: String,
     pub foreign: String,
