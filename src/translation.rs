@@ -12,6 +12,38 @@ pub struct Translation {
     pub guesses_from_foreign_correct: i32,
 }
 
+trait GuessLocal {
+    fn guess_local(&mut self, guess: &str) -> bool;
+}
+
+trait GuessForeign {
+    fn guess_foreign(&mut self, guess: &str) -> bool;
+}
+
+impl GuessLocal for Translation {
+    fn guess_local(&mut self, guess: &str) -> bool {
+        self.guesses_from_local_total += 1;
+        if self.local.to_lowercase() == guess.to_lowercase() {
+            self.guesses_from_local_correct += 1;
+            true
+        } else {
+            false
+        }
+    }
+}
+
+impl GuessForeign for Translation {
+    fn guess_foreign(&mut self, guess: &str) -> bool {
+        self.guesses_from_foreign_total += 1;
+        if self.foreign.to_lowercase() == guess.to_lowercase() {
+            self.guesses_from_foreign_correct += 1;
+            true
+        } else {
+            false
+        }
+    }
+}
+
 fn normalised_percent(numerator: i32, denominator: i32) -> f64 {
     if denominator > 0 {
         numerator as f64 / denominator as f64
@@ -35,31 +67,11 @@ impl Translation {
             self.guesses_from_local_total + self.guesses_from_foreign_total,
         )
     }
-
-    pub fn guess_foreign(&mut self, guess: &str) -> bool {
-        self.guesses_from_foreign_total += 1;
-        if self.foreign.to_lowercase() == guess.to_lowercase() {
-            self.guesses_from_foreign_correct += 1;
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn guess_local(&mut self, guess: &str) -> bool {
-        self.guesses_from_local_total += 1;
-        if self.local.to_lowercase() == guess.to_lowercase() {
-            self.guesses_from_local_correct += 1;
-            true
-        } else {
-            false
-        }
-    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Translation;
+    use super::{GuessForeign, GuessLocal, Translation};
 
     #[test]
     fn test_guess_local() {
