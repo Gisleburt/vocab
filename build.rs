@@ -22,8 +22,9 @@ fn create_readme() -> Result<(), Box<dyn Error>> {
             }
         }
     }
-
-    write("README.md", readme_lines.join("\n")).expect("Could not write to README.md");
+    let mut contents: String = readme_lines.join("\n");
+    contents.push_str("\n");
+    write("README.md", contents).expect("Could not write to README.md");
     Ok(())
 }
 
