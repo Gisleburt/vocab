@@ -88,11 +88,7 @@ impl VocabStore {
         Ok(())
     }
 
-    pub fn find(&self, word: String) -> VSResult<Translation> {
-        todo!()
-    }
-
-    pub fn get_all(&self) -> VSResult<Vec<Translation>> {
+    pub fn get(&self) -> VSResult<Vec<Translation>> {
         todo!()
     }
 }
@@ -161,8 +157,6 @@ mod test {
 
     #[test]
     fn test_add_duplicate_local() {
-        use crate::schema::translations::dsl::*;
-
         let _ = fs::remove_file(&TEST_FILE); // Ok if it fails;
         let vocab_store = VocabStore::init(&TEST_FILE).unwrap();
         let translation = Translation::new("yes", "はい");
@@ -177,8 +171,6 @@ mod test {
 
     #[test]
     fn test_add_duplicate_foreign() {
-        use crate::schema::translations::dsl::*;
-
         let _ = fs::remove_file(&TEST_FILE); // Ok if it fails;
         let vocab_store = VocabStore::init(&TEST_FILE).unwrap();
         let translation = Translation::new("yes", "はい");
@@ -207,9 +199,9 @@ mod test {
             .pop()
             .unwrap();
 
-        assert_eq!(t.guesses_from_foreign_total, 0);
+        assert_eq!(t.guesses_foreign_total, 0);
 
-        translation.guesses_from_foreign_total = 2;
+        translation.guesses_foreign_total = 2;
         vocab_store.save(&translation).unwrap();
 
         let conn = SqliteConnection::establish(&TEST_FILE).unwrap();
@@ -219,6 +211,6 @@ mod test {
             .pop()
             .unwrap();
 
-        assert_eq!(t.guesses_from_foreign_total, 2);
+        assert_eq!(t.guesses_foreign_total, 2);
     }
 }
