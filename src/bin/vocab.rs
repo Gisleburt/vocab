@@ -86,7 +86,7 @@ fn app() -> Result<(), VocabStoreError> {
         Command::Init => {
             VocabStore::init(SQLITE_FILE)?;
             println!("Database initialised");
-        },
+        }
         Command::Add { local, foreign } => {
             let translation = Translation::new(&local, &foreign);
             VocabStore::from(SQLITE_FILE)?.add(&translation)?;

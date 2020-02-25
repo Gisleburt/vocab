@@ -3,9 +3,12 @@ use std::error::Error;
 use std::io;
 use std::path::Path;
 
-use diesel::{Connection, ConnectionError, result::Error as DieselError, RunQueryDsl, SqliteConnection};
+use diesel::{
+    Connection, ConnectionError, result::Error as DieselError, RunQueryDsl, SqliteConnection,
+};
 use diesel::result::DatabaseErrorKind;
 
+use crate::guesses::Guesses;
 use crate::translation::Translation;
 
 const INIT: &str = include_str!("migrations/2020-02-22_vocab_table.sql");
@@ -46,8 +49,10 @@ impl From<std::io::Error> for VocabStoreError {
 impl From<DieselError> for VocabStoreError {
     fn from(e: DieselError) -> Self {
         match e {
-            DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _) => VocabStoreError::DuplicateEntry,
-            _ => VocabStoreError::DatabaseError(e)
+            DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _) => {
+                VocabStoreError::DuplicateEntry
+            }
+            _ => VocabStoreError::DatabaseError(e),
         }
     }
 }
@@ -88,7 +93,7 @@ impl VocabStore {
         Ok(())
     }
 
-    pub fn get(&self) -> VSResult<Vec<Translation>> {
+    pub fn guesses(&self) -> Guesses {
         todo!()
     }
 }
@@ -145,11 +150,7 @@ mod test {
         vocab_store.add(&translation).unwrap();
 
         let conn = SqliteConnection::establish(&TEST_FILE).unwrap();
-        let t: Translation = translations
-            .load(&conn)
-            .unwrap()
-            .pop()
-            .unwrap();
+        let t: Translation = translations.load(&conn).unwrap().pop().unwrap();
 
         assert_eq!(t.local, "yes");
         assert_eq!(t.foreign, "はい");
@@ -164,7 +165,11 @@ mod test {
         let different_foreign = Translation::new("no", "はい");
         match vocab_store.add(&different_foreign) {
             Err(VocabStoreError::DuplicateEntry) => {}
-            Err(e) => assert!(false, "VocabStore did not return DuplicateEntry error: {:?}", e),
+            Err(e) => assert!(
+                false,
+                "VocabStore did not return DuplicateEntry error: {:?}",
+                e
+            ),
             Ok(_) => assert!(false, "VocabStore did not return DuplicateEntry error"),
         }
     }
@@ -178,7 +183,11 @@ mod test {
         let different_local = Translation::new("no", "はい");
         match vocab_store.add(&different_local) {
             Err(VocabStoreError::DuplicateEntry) => {}
-            Err(e) => assert!(false, "VocabStore did not return DuplicateEntry error: {:?}", e),
+            Err(e) => assert!(
+                false,
+                "VocabStore did not return DuplicateEntry error: {:?}",
+                e
+            ),
             Ok(_) => assert!(false, "VocabStore did not return DuplicateEntry error"),
         }
     }
@@ -193,11 +202,7 @@ mod test {
         vocab_store.add(&translation).unwrap();
 
         let conn = SqliteConnection::establish(&TEST_FILE).unwrap();
-        let t: Translation = translations
-            .load(&conn)
-            .unwrap()
-            .pop()
-            .unwrap();
+        let t: Translation = translations.load(&conn).unwrap().pop().unwrap();
 
         assert_eq!(t.guesses_foreign_total, 0);
 
@@ -205,11 +210,7 @@ mod test {
         vocab_store.save(&translation).unwrap();
 
         let conn = SqliteConnection::establish(&TEST_FILE).unwrap();
-        let t: Translation = translations
-            .load(&conn)
-            .unwrap()
-            .pop()
-            .unwrap();
+        let t: Translation = translations.load(&conn).unwrap().pop().unwrap();
 
         assert_eq!(t.guesses_foreign_total, 2);
     }
