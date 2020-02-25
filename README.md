@@ -32,8 +32,16 @@ vocab add japan 日本
 
 ### Try a single word
 
-ToDo!
+You can try guessing a single word at a time
+
+```shell
+vocab single
+```
 
 ### Endless Mode
 
-ToDo!
+When you run the program with no other arguments it will enter endless mode (use ctrl+c to quit)
+
+```shell
+vocab
+```

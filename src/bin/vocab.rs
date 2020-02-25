@@ -32,11 +32,19 @@
 //!
 //! ### Try a single word
 //!
-//! ToDo!
+//! You can try guessing a single word at a time
+//!
+//! ```shell
+//! vocab single
+//! ```
 //!
 //! ### Endless Mode
 //!
-//! ToDo!
+//! When you run the program with no other arguments it will enter endless mode (use ctrl+c to quit)
+//!
+//! ```shell
+//! vocab
+//! ```
 
 use std::error::Error;
 use std::fmt;
@@ -62,7 +70,7 @@ enum Command {
     /// Get a single word from the database
     Single,
     /// (default) Practice as many words as you like
-    Multi,
+    Endless,
 }
 
 const SQLITE_FILE: &str = "vocab.sqlite";
@@ -121,7 +129,7 @@ fn main() {
 }
 
 fn app() -> Result<(), AppError> {
-    match VocabApp::from_args().subcommand.unwrap_or(Command::Multi) {
+    match VocabApp::from_args().subcommand.unwrap_or(Command::Endless) {
         Command::Init => {
             VocabStore::init(SQLITE_FILE)?;
             println!("Database initialised");
@@ -144,7 +152,7 @@ fn app() -> Result<(), AppError> {
             }
             return Err(AppError::NoTranslationsFound);
         }
-        Command::Multi => {
+        Command::Endless => {
             let store = VocabStore::from(SQLITE_FILE)?;
             for guess_result in store.guesses() {
                 let mut guess = guess_result?;
