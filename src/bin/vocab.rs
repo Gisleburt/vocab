@@ -70,6 +70,8 @@ const SQLITE_FILE: &str = "vocab.sqlite";
 #[derive(Debug)]
 enum AppError {
     VocabStoreError(VocabStoreError),
+    NoTranslationsFound,
+    IncorrectGuessInSingleMode,
     IoError(io::Error),
 }
 
@@ -107,6 +109,12 @@ fn main() {
         Err(AppError::VocabStoreError(VocabStoreError::DuplicateEntry)) => {
             eprintln!("Already stored that translation");
         }
+        Err(AppError::NoTranslationsFound) => {
+            eprintln!("No translations found, add with `vocab add <local> <foreign>");
+        }
+        Err(AppError::IncorrectGuessInSingleMode) => {
+            // Nothing to do here, error message already given
+        }
         Err(e) => eprintln!("Something went wrong {:?}", e),
     }
     std::process::exit(1);
@@ -123,8 +131,18 @@ fn app() -> Result<(), AppError> {
             VocabStore::from(SQLITE_FILE)?.add(&translation)?;
         }
         Command::Single => {
-            println!("Commands::Single");
-            todo!()
+            let store = VocabStore::from(SQLITE_FILE)?;
+            if let Some(guess_result) = store.guesses().next() {
+                let mut guess = guess_result?;
+                let result = handle_guess(&mut guess)?;
+                store.save(&guess)?;
+                return if result {
+                    Ok(())
+                } else {
+                    Err(AppError::IncorrectGuessInSingleMode)
+                };
+            }
+            return Err(AppError::NoTranslationsFound);
         }
         Command::Multi => {
             let store = VocabStore::from(SQLITE_FILE)?;
@@ -132,27 +150,29 @@ fn app() -> Result<(), AppError> {
                 let mut guess = guess_result?;
                 handle_guess(&mut guess)?;
                 store.save(&guess)?;
+                return Ok(());
             }
-            eprintln!("No translations found, add with `vocab add <local> <foreign>")
+            return Err(AppError::NoTranslationsFound);
         }
     };
     Ok(())
 }
 
-fn handle_guess(guess: &mut Guess) -> Result<(), AppError> {
+fn handle_guess(guess: &mut Guess) -> Result<bool, AppError> {
     println!();
     println!("Translate: {}", guess.render());
     println!("Your guess: ");
     let user_guess = read_stdin()?;
     if guess.guess(&user_guess) {
-        println!("Correct!")
+        println!("Correct!");
+        Ok(true)
     } else {
         println!(
             "Incorrect! The actual translation is {}",
             guess.render_translation()
-        )
+        );
+        Ok(false)
     }
-    Ok(())
 }
 
 fn read_stdin() -> Result<String, AppError> {
