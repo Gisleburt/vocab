@@ -38,9 +38,13 @@
 //!
 //! ToDo!
 
+use std::error::Error;
+use std::fmt;
+use std::io;
+
 use structopt::StructOpt;
 
-use vocab::{Translation, VocabStore, VocabStoreError};
+use vocab::{Guess, Translation, VocabStore, VocabStoreError};
 
 /// Vocab app
 #[derive(StructOpt)]
@@ -63,17 +67,44 @@ enum Command {
 
 const SQLITE_FILE: &str = "vocab.sqlite";
 
+#[derive(Debug)]
+enum AppError {
+    VocabStoreError(VocabStoreError),
+    IoError(io::Error),
+}
+
+impl Error for AppError {}
+
+impl fmt::Display for AppError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl From<VocabStoreError> for AppError {
+    fn from(e: VocabStoreError) -> Self {
+        AppError::VocabStoreError(e)
+    }
+}
+
+impl From<io::Error> for AppError {
+    fn from(e: io::Error) -> Self {
+        AppError::IoError(e)
+    }
+}
+
 fn main() {
+    // &* allows us to auto deref the Box<dyn Error>
     match app() {
         Ok(_) => std::process::exit(0),
-        Err(VocabStoreError::AlreadyInitialised) => {
+        Err(AppError::VocabStoreError(VocabStoreError::AlreadyInitialised)) => {
             eprintln!("Already initialised");
         }
-        Err(VocabStoreError::NotInitialised) => {
+        Err(AppError::VocabStoreError(VocabStoreError::NotInitialised)) => {
             eprintln!("Not initialised, run: ");
             eprintln!("    vocab --init");
         }
-        Err(VocabStoreError::DuplicateEntry) => {
+        Err(AppError::VocabStoreError(VocabStoreError::DuplicateEntry)) => {
             eprintln!("Already stored that translation");
         }
         Err(e) => eprintln!("Something went wrong {:?}", e),
@@ -81,7 +112,7 @@ fn main() {
     std::process::exit(1);
 }
 
-fn app() -> Result<(), VocabStoreError> {
+fn app() -> Result<(), AppError> {
     match VocabApp::from_args().subcommand.unwrap_or(Command::Multi) {
         Command::Init => {
             VocabStore::init(SQLITE_FILE)?;
@@ -96,9 +127,37 @@ fn app() -> Result<(), VocabStoreError> {
             todo!()
         }
         Command::Multi => {
-            println!("Commands::Multi");
-            todo!()
+            let store = VocabStore::from(SQLITE_FILE)?;
+            for guess_result in store.guesses() {
+                let mut guess = guess_result?;
+                handle_guess(&mut guess)?;
+                store.save(&guess)?;
+            }
+            eprintln!("No translations found, add with `vocab add <local> <foreign>")
         }
     };
     Ok(())
+}
+
+fn handle_guess(guess: &mut Guess) -> Result<(), AppError> {
+    println!();
+    println!("Translate: {}", guess.render());
+    println!("Your guess: ");
+    let user_guess = read_stdin()?;
+    if guess.guess(&user_guess) {
+        println!("Correct!")
+    } else {
+        println!(
+            "Incorrect! The actual translation is {}",
+            guess.render_translation()
+        )
+    }
+    Ok(())
+}
+
+fn read_stdin() -> Result<String, AppError> {
+    let mut input = String::new();
+    io::stdin().read_line(&mut input)?;
+
+    Ok(input.trim().to_string())
 }

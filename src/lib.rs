@@ -2,7 +2,6 @@
 extern crate diesel;
 
 pub use guess::Guess;
-use guesses::Guesses;
 pub use translation::Translation;
 pub use vocab_store::{VocabStore, VocabStoreError};
 

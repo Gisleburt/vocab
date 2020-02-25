@@ -15,6 +15,13 @@ impl Guess {
         }
     }
 
+    pub fn render_translation(&self) -> &str {
+        match self {
+            Guess::Local(translation) => translation.local.as_str(),
+            Guess::Foreign(translation) => translation.foreign.as_str(),
+        }
+    }
+
     pub fn guess(&mut self, guess: &str) -> bool {
         match self {
             Guess::Local(ref mut translation) => translation.guess_local(guess),
@@ -50,6 +57,20 @@ mod tests {
         let translation = Translation::new("yes", "はい");
         let guess = Guess::Foreign(translation);
         assert_eq!(guess.render(), "yes");
+    }
+
+    #[test]
+    fn test_render_translation_local() {
+        let translation = Translation::new("yes", "はい");
+        let guess = Guess::Local(translation);
+        assert_eq!(guess.render_translation(), "yes");
+    }
+
+    #[test]
+    fn test_render_translation_foreign() {
+        let translation = Translation::new("yes", "はい");
+        let guess = Guess::Foreign(translation);
+        assert_eq!(guess.render_translation(), "はい");
     }
 
     #[test]

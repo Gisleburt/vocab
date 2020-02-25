@@ -1,8 +1,6 @@
-use std::error::Error;
-
 use diesel::{QueryDsl, RunQueryDsl, SqliteConnection};
 
-use crate::{Guess, Translation};
+use crate::{Guess, Translation, VocabStoreError};
 
 pub struct Guesses<'a> {
     conn: &'a SqliteConnection,
@@ -15,7 +13,7 @@ impl<'a> Guesses<'a> {
 }
 
 impl<'a> Iterator for Guesses<'a> {
-    type Item = Result<Guess, Box<dyn Error>>;
+    type Item = Result<Guess, VocabStoreError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         use crate::schema::translations::dsl::*;
@@ -46,8 +44,8 @@ mod tests {
 
     use diesel::{Connection, RunQueryDsl, SqliteConnection};
 
-    use crate::{Translation, VocabStore};
     use crate::guesses::Guesses;
+    use crate::{Translation, VocabStore};
 
     const TEST_FILE: &str = "test.sqlite";
 

@@ -3,10 +3,10 @@ use std::error::Error;
 use std::io;
 use std::path::Path;
 
-use diesel::{
-    Connection, ConnectionError, result::Error as DieselError, RunQueryDsl, SqliteConnection,
-};
 use diesel::result::DatabaseErrorKind;
+use diesel::{
+    result::Error as DieselError, Connection, ConnectionError, RunQueryDsl, SqliteConnection,
+};
 
 use crate::guesses::Guesses;
 use crate::translation::Translation;
@@ -94,7 +94,7 @@ impl VocabStore {
     }
 
     pub fn guesses(&self) -> Guesses {
-        todo!()
+        Guesses::new(&self.0)
     }
 }
 
