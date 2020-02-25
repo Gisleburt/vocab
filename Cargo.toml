@@ -1,6 +1,6 @@
 [package]
 name = "vocab"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Daniel Mason <daniel@danielmason.com>"]
 edition = "2018"
 license = "MIT"

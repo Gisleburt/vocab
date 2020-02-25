@@ -4,6 +4,12 @@ A command line application for learning vocabulary in new languages
 
 ## Usage:
 
+### Installation
+
+```shell
+cargo install vocab
+```
+
 ### Initialising:
 
 `init` will create a bew vocab.sqlite file in the current directory. We recommend you use

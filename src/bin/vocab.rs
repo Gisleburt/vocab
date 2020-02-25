@@ -4,6 +4,12 @@
 //!
 //! ## Usage:
 //!
+//! ### Installation
+//!
+//! ```shell
+//! cargo install vocab
+//! ```
+//!
 //! ### Initialising:
 //!
 //! `init` will create a bew vocab.sqlite file in the current directory. We recommend you use
@@ -49,6 +55,7 @@
 use std::error::Error;
 use std::fmt;
 use std::io;
+use std::io::Write;
 
 use structopt::StructOpt;
 
@@ -158,7 +165,6 @@ fn app() -> Result<(), AppError> {
                 let mut guess = guess_result?;
                 handle_guess(&mut guess)?;
                 store.save(&guess)?;
-                return Ok(());
             }
             return Err(AppError::NoTranslationsFound);
         }
@@ -169,7 +175,7 @@ fn app() -> Result<(), AppError> {
 fn handle_guess(guess: &mut Guess) -> Result<bool, AppError> {
     println!();
     println!("Translate: {}", guess.render());
-    println!("Your guess: ");
+    write_stdout("Your guess: ")?;
     let user_guess = read_stdin()?;
     if guess.guess(&user_guess) {
         println!("Correct!");
@@ -188,4 +194,14 @@ fn read_stdin() -> Result<String, AppError> {
     io::stdin().read_line(&mut input)?;
 
     Ok(input.trim().to_string())
+}
+
+fn write_stdout(output: &str) -> Result<(), AppError> {
+    let mut stdout = io::stdout();
+    {
+        let mut handle = stdout.lock();
+        handle.write_all(output.as_bytes())?;
+    }
+    stdout.flush()?;
+    Ok(())
 }
