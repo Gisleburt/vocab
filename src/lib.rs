@@ -5,6 +5,7 @@ pub use guess::Guess;
 pub use translation::Translation;
 pub use vocab_store::{VocabStore, VocabStoreError};
 
+mod exporter;
 mod guess;
 mod guesses;
 mod schema;
