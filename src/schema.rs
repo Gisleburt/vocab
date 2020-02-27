@@ -8,3 +8,5 @@ table! {
         guesses_foreign_correct -> Integer,
     }
 }
+
+no_arg_sql_function!(RANDOM, (), "Represents the sql RANDOM() function");

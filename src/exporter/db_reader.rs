@@ -1,5 +1,6 @@
 use diesel::{QueryDsl, RunQueryDsl, SqliteConnection};
 
+use crate::schema::RANDOM;
 use crate::{Translation, VocabStoreError};
 
 pub struct DbReader<'a> {
@@ -18,7 +19,6 @@ impl<'a> Iterator for DbReader<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         use crate::schema::translations::dsl::*;
-        no_arg_sql_function!(RANDOM, (), "Represents the sql RANDOM() function");
 
         let query_result = translations
             .limit(1)

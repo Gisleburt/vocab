@@ -1,5 +1,6 @@
 use diesel::{QueryDsl, RunQueryDsl, SqliteConnection};
 
+use crate::schema::RANDOM;
 use crate::{Guess, Translation, VocabStoreError};
 
 pub struct Guesses<'a> {
@@ -17,7 +18,6 @@ impl<'a> Iterator for Guesses<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         use crate::schema::translations::dsl::*;
-        no_arg_sql_function!(RANDOM, (), "Represents the sql RANDOM() function");
 
         let query_result = translations
             .order(RANDOM)
