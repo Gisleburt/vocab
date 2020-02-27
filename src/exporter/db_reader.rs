@@ -1,7 +1,6 @@
 use diesel::{QueryDsl, RunQueryDsl, SqliteConnection};
 
-use crate::schema::RANDOM;
-use crate::{Translation, VocabStoreError};
+use crate::{schema::RANDOM, Translation, VocabStoreError};
 
 pub struct DbReader<'a> {
     conn: &'a SqliteConnection,

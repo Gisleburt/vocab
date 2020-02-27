@@ -1,7 +1,6 @@
 use diesel::{QueryDsl, RunQueryDsl, SqliteConnection};
 
-use crate::schema::RANDOM;
-use crate::{Guess, Translation, VocabStoreError};
+use crate::{schema::RANDOM, Guess, Translation, VocabStoreError};
 
 pub struct Guesses<'a> {
     conn: &'a SqliteConnection,
