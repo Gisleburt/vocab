@@ -1,11 +1,11 @@
+// cargo-deps: regex="1.3.1"
 extern crate regex;
 
-use std::error::Error;
-use std::fs::File;
-use std::fs::write;
-use std::io::{BufRead, BufReader};
-
 use regex::Regex;
+use std::error::Error;
+use std::fs::write;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 
 fn create_readme() -> Result<(), Box<dyn Error>> {
     let comment_capture = Regex::new(r"^//!\s?(?P<comment>.*)")?;
