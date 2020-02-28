@@ -8,6 +8,7 @@ use diesel::{
     result::Error as DieselError, Connection, ConnectionError, RunQueryDsl, SqliteConnection,
 };
 
+use crate::exporter::{CsvWriter, DbReader, ExporterError};
 use crate::guesses::Guesses;
 use crate::translation::Translation;
 
@@ -21,6 +22,7 @@ pub enum VocabStoreError {
     DuplicateEntry,
     DatabaseError(DieselError),
     UnexpectedError(Box<dyn Error>),
+    ExporterError(ExporterError),
 }
 
 impl fmt::Display for VocabStoreError {
@@ -54,6 +56,12 @@ impl From<DieselError> for VocabStoreError {
             }
             _ => VocabStoreError::DatabaseError(e),
         }
+    }
+}
+
+impl From<ExporterError> for VocabStoreError {
+    fn from(e: ExporterError) -> Self {
+        VocabStoreError::ExporterError(e)
     }
 }
 
@@ -95,6 +103,19 @@ impl VocabStore {
 
     pub fn guesses(&self) -> Guesses {
         Guesses::new(&self.0)
+    }
+
+    pub fn export<W: io::Write>(&self, writer: W) -> Result<(), VocabStoreError> {
+        let db_reader = DbReader::new(&self.0);
+        let mut csv_writer = CsvWriter::new(writer)?;
+        db_reader
+            .map(|record| {
+                record.and_then(|translation| csv_writer.write(translation).map_err(|e| e.into()))
+            })
+            .filter(|result| result.is_err())
+            .take(1)
+            .next()
+            .unwrap_or_else(|| Ok(()))
     }
 }
 

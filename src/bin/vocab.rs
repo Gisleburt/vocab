@@ -53,12 +53,13 @@
 //! ```
 
 use std::error::Error;
-use std::fmt;
 use std::io;
 use std::io::Write;
+use std::{fmt, fs};
 
 use structopt::StructOpt;
 
+use std::path::Path;
 use vocab::{Guess, Translation, VocabStore, VocabStoreError};
 
 /// Vocab app
@@ -78,6 +79,11 @@ enum Command {
     Single,
     /// (default) Practice as many words as you like
     Endless,
+    /// Export the database to a csv
+    Export {
+        #[structopt(short, long)]
+        file: Option<String>,
+    },
 }
 
 const SQLITE_FILE: &str = "vocab.sqlite";
@@ -88,6 +94,7 @@ enum AppError {
     NoTranslationsFound,
     IncorrectGuessInSingleMode,
     IoError(io::Error),
+    ExportFileAlreadyExists,
 }
 
 impl Error for AppError {}
@@ -130,6 +137,7 @@ fn main() {
         Err(AppError::IncorrectGuessInSingleMode) => {
             // Nothing to do here, error message already given
         }
+        Err(AppError::ExportFileAlreadyExists) => eprintln!("File already exists"),
         Err(e) => eprintln!("Something went wrong {:?}", e),
     }
     std::process::exit(1);
@@ -141,10 +149,12 @@ fn app() -> Result<(), AppError> {
             VocabStore::init(SQLITE_FILE)?;
             println!("Database initialised");
         }
+
         Command::Add { local, foreign } => {
             let translation = Translation::new(&local, &foreign);
             VocabStore::from(SQLITE_FILE)?.add(&translation)?;
         }
+
         Command::Single => {
             let store = VocabStore::from(SQLITE_FILE)?;
             if let Some(guess_result) = store.guesses().next() {
@@ -159,6 +169,7 @@ fn app() -> Result<(), AppError> {
             }
             return Err(AppError::NoTranslationsFound);
         }
+
         Command::Endless => {
             let store = VocabStore::from(SQLITE_FILE)?;
             for guess_result in store.guesses() {
@@ -167,6 +178,19 @@ fn app() -> Result<(), AppError> {
                 store.save(&guess)?;
             }
             return Err(AppError::NoTranslationsFound);
+        }
+
+        Command::Export { file } => {
+            let store = VocabStore::from(SQLITE_FILE)?;
+            match file.unwrap_or("-".to_string()).as_str() {
+                "-" => store.export(io::stdout())?,
+                f => {
+                    if Path::new(f).exists() {
+                        return Err(AppError::ExportFileAlreadyExists);
+                    }
+                    store.export(fs::OpenOptions::new().create(true).write(true).open(f)?)?
+                }
+            };
         }
     };
     Ok(())
