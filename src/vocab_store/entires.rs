@@ -1,19 +1,18 @@
+use crate::{Translation, VocabStoreError};
 use diesel::{QueryDsl, RunQueryDsl, SqliteConnection};
 
-use crate::{Translation, VocabStoreError};
-
-pub struct DbReader<'a> {
-    conn: &'a SqliteConnection,
+pub struct Entries<'c> {
+    conn: &'c SqliteConnection,
     page: i64,
 }
 
-impl<'a> DbReader<'a> {
-    pub fn new(conn: &'a SqliteConnection) -> DbReader<'a> {
-        DbReader { conn, page: 0 }
+impl<'c> Entries<'c> {
+    pub fn new(conn: &'c SqliteConnection) -> Entries<'c> {
+        Entries { conn, page: 0 }
     }
 }
 
-impl<'a> Iterator for DbReader<'a> {
+impl<'c> Iterator for Entries<'c> {
     type Item = Result<Translation, VocabStoreError>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -35,22 +34,20 @@ impl<'a> Iterator for DbReader<'a> {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-
-    use diesel::{Connection, RunQueryDsl, SqliteConnection};
-
-    use crate::exporter::Exporter;
+    use super::Entries;
     use crate::{Translation, VocabStore};
+    use diesel::{Connection, RunQueryDsl, SqliteConnection};
+    use std::fs;
 
     const TEST_FILE: &str = "test.sqlite";
 
     #[test]
     fn test_exports_all_translation() {
         let _ = fs::remove_file(&TEST_FILE); // Ok if it fails;
-        VocabStore::init(&TEST_FILE).unwrap(); // Init DB
+        let vocab_store = VocabStore::init(&TEST_FILE).unwrap(); // Init DB
 
         let conn = SqliteConnection::establish(&TEST_FILE).unwrap();
-        let mut exporter = Exporter::new(&conn);
+        let mut exporter = Entries::new(&conn);
         let translation_yes = Translation::new("yes", "はい");
         let translation_no = Translation::new("no", "いいえ");
         diesel::insert_into(crate::schema::translations::table)

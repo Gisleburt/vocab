@@ -5,12 +5,21 @@ use std::path::Path;
 
 use diesel::result::DatabaseErrorKind;
 use diesel::{
-    result::Error as DieselError, Connection, ConnectionError, RunQueryDsl, SqliteConnection,
+    result::Error as DieselError, Connection, ConnectionError, QueryDsl, RunQueryDsl,
+    SqliteConnection,
 };
 
-use crate::exporter::{CsvWriter, DbReader, ExporterError};
-use crate::guesses::Guesses;
-use crate::translation::Translation;
+pub use crate::porter::{CsvWriter, ExporterError};
+use crate::schema::RANDOM;
+use crate::vocab_store::entires::Entries;
+pub use guess::Guess;
+use guesses::Guesses;
+pub use translation::Translation;
+
+mod entires;
+mod guess;
+mod guesses;
+mod translation;
 
 const INIT: &str = include_str!("migrations/2020-02-22_vocab_table.sql");
 
@@ -23,6 +32,7 @@ pub enum VocabStoreError {
     DatabaseError(DieselError),
     UnexpectedError(Box<dyn Error>),
     ExporterError(ExporterError),
+    ReconciliationError,
 }
 
 impl fmt::Display for VocabStoreError {
@@ -106,7 +116,7 @@ impl VocabStore {
     }
 
     pub fn export<W: io::Write>(&self, writer: W) -> Result<(), VocabStoreError> {
-        let db_reader = DbReader::new(&self.0);
+        let db_reader = Entries::new(&self.0);
         let mut csv_writer = CsvWriter::new(writer)?;
         db_reader
             .map(|record| {

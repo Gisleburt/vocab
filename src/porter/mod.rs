@@ -1,10 +1,8 @@
 use csv;
-pub use csv_writer::CsvWriter;
-pub use db_reader::DbReader;
+pub use csv_io::CsvWriter;
 use std::io;
 
-mod csv_writer;
-mod db_reader;
+mod csv_io;
 
 #[derive(Debug)]
 pub enum ExporterError {

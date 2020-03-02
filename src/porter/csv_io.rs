@@ -3,7 +3,7 @@ use std::io;
 use csv::Writer;
 use serde::{Deserialize, Serialize};
 
-use crate::exporter::ExporterError;
+use crate::porter::ExporterError;
 
 #[derive(Deserialize, Serialize)]
 struct Translation {
@@ -34,7 +34,7 @@ pub struct CsvWriter<W: io::Write> {
 
 impl<W: io::Write> CsvWriter<W> {
     pub fn new(destination: W) -> Result<CsvWriter<W>, ExporterError> {
-        let writer = csv::Writer::from_writer(destination);
+        let writer = Writer::from_writer(destination);
         Ok(CsvWriter { writer })
     }
 

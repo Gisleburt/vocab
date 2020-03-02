@@ -43,7 +43,7 @@ mod tests {
 
     use diesel::{Connection, RunQueryDsl, SqliteConnection};
 
-    use crate::guesses::Guesses;
+    use crate::vocab_store::guesses::Guesses;
     use crate::{Translation, VocabStore};
 
     const TEST_FILE: &str = "test.sqlite";

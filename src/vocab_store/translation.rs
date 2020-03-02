@@ -1,6 +1,7 @@
 use diesel::{Insertable, Queryable};
 
 use crate::schema::translations;
+use crate::VocabStoreError;
 
 #[derive(Debug, Default, Insertable, Queryable, PartialEq)]
 pub struct Translation {
@@ -55,6 +56,37 @@ impl Translation {
             false
         }
     }
+
+    pub fn reconcile(self, other: Translation) -> Result<Translation, VocabStoreError> {
+        // Don't reconcile different translations
+        if self.local != other.local || self.foreign != other.foreign {
+            return Err(VocabStoreError::ReconciliationError);
+        }
+
+        // Take whichever side has most guesses
+        let more_local = self.guesses_local_total > other.guesses_local_total;
+        let more_foreign = self.guesses_foreign_total > other.guesses_foreign_total;
+
+        let (guesses_local_total, guesses_local_correct) = if more_local {
+            (self.guesses_local_total, self.guesses_local_correct)
+        } else {
+            (other.guesses_local_total, other.guesses_local_correct)
+        };
+        let (guesses_foreign_total, guesses_foreign_correct) = if more_foreign {
+            (self.guesses_foreign_total, self.guesses_foreign_correct)
+        } else {
+            (other.guesses_foreign_total, other.guesses_foreign_correct)
+        };
+
+        Ok(Translation {
+            local: self.local,
+            foreign: self.foreign,
+            guesses_local_total,
+            guesses_local_correct,
+            guesses_foreign_total,
+            guesses_foreign_correct,
+        })
+    }
 }
 
 #[cfg(test)]
@@ -95,5 +127,9 @@ mod tests {
         assert_eq!(translation.guesses_foreign_total, 2);
         assert_eq!(translation.guesses_foreign_correct, 1);
         assert_eq!(translation.get_total_percent(), 0.5);
+    }
+
+    fn test_reconcile() {
+        let mut old_translation = Translation::new("yes", "はい");
     }
 }
