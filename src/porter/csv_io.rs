@@ -1,6 +1,6 @@
 use std::io;
 
-use csv::Writer;
+use csv::{Reader, Writer};
 use serde::{Deserialize, Serialize};
 
 use crate::porter::ExporterError;
@@ -28,14 +28,51 @@ impl From<crate::Translation> for Translation {
     }
 }
 
+impl From<Translation> for crate::Translation {
+    fn from(t: Translation) -> Self {
+        crate::Translation {
+            local: t.local,
+            foreign: t.foreign,
+            guesses_local_total: t.guesses_local_total,
+            guesses_local_correct: t.guesses_local_correct,
+            guesses_foreign_total: t.guesses_foreign_total,
+            guesses_foreign_correct: t.guesses_foreign_correct,
+        }
+    }
+}
+
+pub struct CsvReader<R: io::Read> {
+    reader: Reader<R>,
+}
+
+impl<R: io::Read> CsvReader<R> {
+    pub fn new(source: R) -> CsvReader<R> {
+        CsvReader {
+            reader: Reader::from_reader(source),
+        }
+    }
+}
+
+impl<R: io::Read> Iterator for CsvReader<R> {
+    type Item = Result<crate::Translation, ExporterError>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.reader
+            .deserialize::<Translation>()
+            .next()
+            .map(|res| res.map(|rec| rec.into()).map_err(|e| e.into()))
+    }
+}
+
 pub struct CsvWriter<W: io::Write> {
     writer: Writer<W>,
 }
 
 impl<W: io::Write> CsvWriter<W> {
-    pub fn new(destination: W) -> Result<CsvWriter<W>, ExporterError> {
-        let writer = Writer::from_writer(destination);
-        Ok(CsvWriter { writer })
+    pub fn new(destination: W) -> CsvWriter<W> {
+        CsvWriter {
+            writer: Writer::from_writer(destination),
+        }
     }
 
     pub fn write(&mut self, translation: crate::Translation) -> Result<(), ExporterError> {

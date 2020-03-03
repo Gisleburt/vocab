@@ -27,7 +27,7 @@ impl<'c> Iterator for Entries<'c> {
 
         match query_result {
             Err(e) => Some(Err(e.into())),
-            Ok(mut translation_results) => translation_results.pop().map(|t: Translation| Ok(t)),
+            Ok(mut translation_results) => translation_results.pop().map(Ok),
         }
     }
 }

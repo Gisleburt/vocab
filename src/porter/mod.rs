@@ -1,5 +1,5 @@
 use csv;
-pub use csv_io::CsvWriter;
+pub use csv_io::{CsvReader, CsvWriter};
 use std::io;
 
 mod csv_io;

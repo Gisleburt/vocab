@@ -5,12 +5,11 @@ use std::path::Path;
 
 use diesel::result::DatabaseErrorKind;
 use diesel::{
-    result::Error as DieselError, Connection, ConnectionError, QueryDsl, RunQueryDsl,
-    SqliteConnection,
+    result::Error as DieselError, Connection, ConnectionError, ExpressionMethods, QueryDsl,
+    RunQueryDsl, SqliteConnection,
 };
 
 pub use crate::porter::{CsvWriter, ExporterError};
-use crate::schema::RANDOM;
 use crate::vocab_store::entires::Entries;
 pub use guess::Guess;
 use guesses::Guesses;
@@ -111,21 +110,22 @@ impl VocabStore {
         Ok(())
     }
 
+    pub fn find_local(&self, find_local: &str) -> VSResult<Option<Translation>> {
+        use crate::schema::translations::dsl::*;
+
+        Ok(translations
+            .filter(local.eq(find_local))
+            .limit(1)
+            .load::<Translation>(&self.0)?
+            .pop())
+    }
+
     pub fn guesses(&self) -> Guesses {
         Guesses::new(&self.0)
     }
 
-    pub fn export<W: io::Write>(&self, writer: W) -> Result<(), VocabStoreError> {
-        let db_reader = Entries::new(&self.0);
-        let mut csv_writer = CsvWriter::new(writer)?;
-        db_reader
-            .map(|record| {
-                record.and_then(|translation| csv_writer.write(translation).map_err(|e| e.into()))
-            })
-            .filter(|result| result.is_err())
-            .take(1)
-            .next()
-            .unwrap_or_else(|| Ok(()))
+    pub fn entries(&self) -> Entries {
+        Entries::new(&self.0)
     }
 }
 

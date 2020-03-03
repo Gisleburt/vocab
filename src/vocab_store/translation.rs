@@ -92,6 +92,7 @@ impl Translation {
 #[cfg(test)]
 mod tests {
     use super::Translation;
+    use crate::VocabStoreError;
 
     #[test]
     fn test_guess_local() {
@@ -129,7 +130,32 @@ mod tests {
         assert_eq!(translation.get_total_percent(), 0.5);
     }
 
+    #[test]
     fn test_reconcile() {
         let mut old_translation = Translation::new("yes", "はい");
+        old_translation.guesses_local_correct = 4;
+        old_translation.guesses_local_total = 5;
+        old_translation.guesses_foreign_correct = 3;
+        old_translation.guesses_foreign_total = 5;
+        let mut new_translation = Translation::new("yes", "はい");
+        new_translation.guesses_local_correct = 4;
+        new_translation.guesses_local_total = 4;
+        new_translation.guesses_foreign_correct = 6;
+        new_translation.guesses_foreign_total = 6;
+        let reconciled_translation = old_translation.reconcile(new_translation).unwrap();
+
+        assert_eq!(reconciled_translation.local, "yes");
+        assert_eq!(reconciled_translation.foreign, "はい");
+        assert_eq!(reconciled_translation.guesses_local_correct, 4);
+        assert_eq!(reconciled_translation.guesses_local_total, 5);
+        assert_eq!(reconciled_translation.guesses_foreign_correct, 6);
+        assert_eq!(reconciled_translation.guesses_foreign_total, 6);
+
+        let mut old_translation = Translation::new("no", "いいえ");
+        let mut new_translation = Translation::new("japan", "日本");
+        match old_translation.reconcile(new_translation) {
+            Err(VocabStoreError::ReconciliationError) => {}
+            _ => assert!(false, "VocabStore did not return ReconciliationError error"),
+        }
     }
 }

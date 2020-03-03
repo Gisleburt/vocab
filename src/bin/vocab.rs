@@ -54,13 +54,13 @@
 
 use std::error::Error;
 use std::io;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::{fmt, fs};
 
 use structopt::StructOpt;
 
 use std::path::Path;
-use vocab::{Guess, Translation, VocabStore, VocabStoreError};
+use vocab::{CsvReader, CsvWriter, ExporterError, Guess, Translation, VocabStore, VocabStoreError};
 
 /// Vocab app
 #[derive(StructOpt)]
@@ -84,6 +84,11 @@ enum Command {
         #[structopt(short, long)]
         file: Option<String>,
     },
+    /// Import the database from a csv
+    Import {
+        #[structopt(short, long)]
+        file: Option<String>,
+    },
 }
 
 const SQLITE_FILE: &str = "vocab.sqlite";
@@ -95,6 +100,8 @@ enum AppError {
     IncorrectGuessInSingleMode,
     IoError(io::Error),
     ExportFileAlreadyExists,
+    ImportFileDoesNotExist,
+    ExporterError(ExporterError),
 }
 
 impl Error for AppError {}
@@ -114,6 +121,12 @@ impl From<VocabStoreError> for AppError {
 impl From<io::Error> for AppError {
     fn from(e: io::Error) -> Self {
         AppError::IoError(e)
+    }
+}
+
+impl From<ExporterError> for AppError {
+    fn from(e: ExporterError) -> Self {
+        AppError::ExporterError(e)
     }
 }
 
@@ -138,6 +151,7 @@ fn main() {
             // Nothing to do here, error message already given
         }
         Err(AppError::ExportFileAlreadyExists) => eprintln!("File already exists"),
+        Err(AppError::ImportFileDoesNotExist) => eprintln!("File does not exists"),
         Err(e) => eprintln!("Something went wrong {:?}", e),
     }
     std::process::exit(1);
@@ -182,15 +196,46 @@ fn app() -> Result<(), AppError> {
 
         Command::Export { file } => {
             let store = VocabStore::from(SQLITE_FILE)?;
-            match file.unwrap_or("-".to_string()).as_str() {
-                "-" => store.export(io::stdout())?,
+            let write: Box<dyn Write> = match file.as_deref().unwrap_or("-") {
+                "-" => Box::new(io::stdout()),
                 f => {
                     if Path::new(f).exists() {
                         return Err(AppError::ExportFileAlreadyExists);
                     }
-                    store.export(fs::OpenOptions::new().create(true).write(true).open(f)?)?
+                    Box::new(fs::OpenOptions::new().create(true).write(true).open(f)?)
                 }
             };
+            let mut csv_writer = CsvWriter::new(write);
+
+            for record in store.entries() {
+                csv_writer.write(record?)?;
+            }
+        }
+
+        Command::Import { file } => {
+            let store = VocabStore::from(SQLITE_FILE)?;
+            let read: Box<dyn Read> = match file.as_deref().unwrap_or("-") {
+                "-" => Box::new(io::stdin()),
+                f => {
+                    if !Path::new(f).exists() {
+                        return Err(AppError::ImportFileDoesNotExist);
+                    }
+                    Box::new(fs::OpenOptions::new().read(true).open(f)?)
+                }
+            };
+            let csv_reader = CsvReader::new(read);
+
+            for record in csv_reader {
+                let new_t = record?;
+                if let Some(old_t) = store.find_local(&new_t.local)? {
+                    let rec_t = old_t.reconcile(new_t)?;
+                    store.save(&rec_t)?;
+                    println!("updated: {} - {}", &rec_t.local, &rec_t.foreign);
+                } else {
+                    store.add(&new_t)?;
+                    println!("added:   {} - {}", &new_t.local, &new_t.foreign);
+                }
+            }
         }
     };
     Ok(())
