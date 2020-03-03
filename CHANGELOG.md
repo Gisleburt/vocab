@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2020-03-03
+### Added
+- Import / Export
+
+### Fix
+- Error message when vocab is not initialised gave incorrect advice
+- Remove build dependencies that the build actually didn't depend on (instead use cargo script for doc building)
+
 ## [0.1.1] - 2020-02-25
 ### Added
 - Installation instructions

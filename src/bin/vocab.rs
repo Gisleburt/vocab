@@ -51,6 +51,33 @@
 //! ```shell
 //! vocab
 //! ```
+//!
+//! ### Export the database
+//!
+//! You can export the database to csv file, either by naming it or via stdout
+//!
+//! ```shell
+//! vocab export -f my_japanese_backup.csv
+//! ```
+//! or
+//! ```shell
+//! vocab export > my_japanese_backup.csv
+//! ```
+//!
+//! ### Import your backup
+//!
+//! You can import you old csv file in much the same way
+//!
+//! ```shell
+//! vocab import -f my_japanese_backup.csv
+//! ```
+//! or
+//! ```shell
+//! cat my_japanese_backup.csv | vocab export
+//! ```
+//!
+//! If the database already contains the vocabulary in the csv file it will attempt to reconcile
+//! the differences, choosing whichever set has more guesses against it.
 
 use std::error::Error;
 use std::io;
@@ -62,7 +89,9 @@ use structopt::StructOpt;
 use std::path::Path;
 use vocab::{CsvReader, CsvWriter, ExporterError, Guess, Translation, VocabStore, VocabStoreError};
 
-/// Vocab app
+/// For helping remember vocabulary in a new language.
+///
+/// Add new words with `vocab add`, then test yourself by running vocab in endless mode.
 #[derive(StructOpt)]
 struct VocabApp {
     #[structopt(subcommand)]
