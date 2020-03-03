@@ -126,7 +126,7 @@ fn main() {
         }
         Err(AppError::VocabStoreError(VocabStoreError::NotInitialised)) => {
             eprintln!("Not initialised, run: ");
-            eprintln!("    vocab --init");
+            eprintln!("    vocab init");
         }
         Err(AppError::VocabStoreError(VocabStoreError::DuplicateEntry)) => {
             eprintln!("Already stored that translation");
